@@ -12,10 +12,13 @@ function PredictionResult({ result = demoResult }) {
     Math.min(100, Number(result.confidence) * 100 || 0)
   );
 
+  const isDemo = result === demoResult;
+
   return (
     <section
-      className="mx-auto w-full max-w-[760px] rounded-[22px]
-                 border border-[#E0E8F3] bg-white p-6 sm:p-[25px]"
+      className="mx-auto w-full max-w-[760px]
+                 rounded-[22px] border border-[#E0E8F3]
+                 bg-white p-5 sm:p-[25px]"
       aria-labelledby="result-title"
     >
       <h2
@@ -25,14 +28,21 @@ function PredictionResult({ result = demoResult }) {
         Analysis results
       </h2>
 
-      <p className="mt-2 text-xs text-[#71829A]">
-        Sample output — illustrative values only
-      </p>
+      {isDemo && (
+        <p className="mt-2 text-xs text-[#71829A]">
+          Sample output — illustrative values only
+        </p>
+      )}
 
       {/* MRI visualization */}
       <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5">
-        <div>
-          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-[#172940] sm:aspect-auto sm:h-[185px]">
+        <div className="min-w-0">
+          <div
+            className="flex aspect-square items-center
+                       justify-center overflow-hidden
+                       rounded-xl bg-[#172940]
+                       sm:aspect-auto sm:h-[185px]"
+          >
             {result.originalImage ? (
               <img
                 src={result.originalImage}
@@ -45,13 +55,19 @@ function PredictionResult({ result = demoResult }) {
               </span>
             )}
           </div>
+
           <p className="mt-2 text-xs text-[#71829A]">
             Original scan
           </p>
         </div>
 
-        <div>
-          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-[#172940] sm:aspect-auto sm:h-[185px]">
+        <div className="min-w-0">
+          <div
+            className="flex aspect-square items-center
+                       justify-center overflow-hidden
+                       rounded-xl bg-[#172940]
+                       sm:aspect-auto sm:h-[185px]"
+          >
             {result.segmentationImage ? (
               <img
                 src={result.segmentationImage}
@@ -64,6 +80,7 @@ function PredictionResult({ result = demoResult }) {
               </span>
             )}
           </div>
+
           <p className="mt-2 text-xs text-[#71829A]">
             Segmentation
           </p>
@@ -75,24 +92,27 @@ function PredictionResult({ result = demoResult }) {
         <p className="text-sm text-[#71829A]">
           Predicted class
         </p>
-        <p className="mt-1 text-2xl font-semibold text-[#12233D]">
+
+        <p className="mt-1 break-words text-2xl font-semibold text-[#12233D]">
           {result.predictedClass}
         </p>
       </div>
 
-      {/* Prediction confidence */}
+      {/* Confidence score */}
       <div className="mt-7">
         <div className="mb-3 flex items-center justify-between gap-3">
           <p className="text-sm text-[#71829A]">
             Confidence
           </p>
+
           <span className="text-sm font-semibold text-[#2463EB]">
             {confidence.toFixed(1)}%
           </span>
         </div>
 
         <div
-          className="h-2.5 w-full overflow-hidden rounded-full bg-[#EEF5FF]"
+          className="h-2.5 w-full overflow-hidden
+                     rounded-full bg-[#EEF5FF]"
           role="progressbar"
           aria-label="Prediction confidence"
           aria-valuenow={confidence}
@@ -106,7 +126,7 @@ function PredictionResult({ result = demoResult }) {
         </div>
       </div>
 
-      <p className="mt-5 text-xs text-[#71829A]">
+      <p className="mt-5 text-xs leading-relaxed text-[#71829A]">
         Research demonstration only — not for diagnosis.
       </p>
     </section>

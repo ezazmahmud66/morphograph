@@ -6,8 +6,9 @@ import Hero from "./components/layout/Hero";
 import MRIUpload from "./components/upload/MRIUpload";
 import ProcessingState from "./components/processing/ProcessingState";
 import PredictionResult from "./components/results/PredictionResult";
-
+import ResearchOverview from "./components/research/ResearchOverview";
 import { siteConfig } from "./config/site";
+
 
 const previewOptions = [
   { label: "Upload", value: "upload" },
@@ -69,6 +70,7 @@ function App() {
         </div>
 
         {renderActiveView()}
+        <ResearchOverview />
       </main>
 
       <footer className="px-6 pb-8 text-center">
