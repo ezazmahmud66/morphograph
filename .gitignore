@@ -1,0 +1,39 @@
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Node / React
+node_modules/
+dist/
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML Checkpoints
+*.pth
+*.pt
+*.ckpt
+*.onnx
+
+# Private Datasets
+datasets/
+private_data/
+uploads/
+
+# Logs
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
