@@ -1,20 +1,83 @@
 
+import { useState } from "react";
+
+import Header from "./components/layout/Header";
+import Hero from "./components/layout/Hero";
+import MRIUpload from "./components/upload/MRIUpload";
+import ProcessingState from "./components/processing/ProcessingState";
+import PredictionResult from "./components/results/PredictionResult";
+
+import { siteConfig } from "./config/site";
+
+const previewOptions = [
+  { label: "Upload", value: "upload" },
+  { label: "Processing", value: "processing" },
+  { label: "Result", value: "result" },
+];
+
 function App() {
+  const [activeView, setActiveView] = useState("upload");
+
+  function renderActiveView() {
+    switch (activeView) {
+      case "processing":
+        return <ProcessingState />;
+
+      case "result":
+        return <PredictionResult />;
+
+      case "upload":
+      default:
+        return <MRIUpload />;
+    }
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
-      <h1 className="text-5xl font-bold text-blue-600">
-        MorphoGraph
-      </h1>
+    <div className="min-h-screen bg-[#F6F9FE]">
+      <Header />
 
-      <p className="mt-4 text-center text-lg text-slate-600">
-        Brain Tumor MRI Analysis
-      </p>
+      <main className="px-6 pb-12 sm:px-8">
+        <Hero />
 
-      <button className="mt-8 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700">
-        Upload MRI
-      </button>
+        {/* Temporary design preview controls */}
+        <div className="mx-auto mb-6 flex max-w-[760px] flex-col items-center gap-3">
+          <p className="text-xs font-medium text-[#71829A]">
+            Design Preview — Select UI State
+          </p>
+
+          <div
+            className="flex flex-wrap justify-center gap-2"
+            role="group"
+            aria-label="Preview interface state"
+          >
+            {previewOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setActiveView(option.value)}
+                aria-pressed={activeView === option.value}
+                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                  activeView === option.value
+                    ? "border-[#2463EB] bg-[#2463EB] text-white"
+                    : "border-[#E0E8F3] bg-white text-[#71829A] hover:border-[#2463EB]"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {renderActiveView()}
+      </main>
+
+      <footer className="px-6 pb-8 text-center">
+        <p className="text-xs text-[#71829A]">
+          {siteConfig.disclaimer}
+        </p>
+      </footer>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
