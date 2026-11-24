@@ -2,9 +2,8 @@
 import { useState } from "react";
 import { useMRIUpload } from "../../hooks/useMRIUpload";
 
-function MRIUpload() {
+function MRIUpload({ onAnalyze }) {
   const [isDragging, setIsDragging] = useState(false);
-  const [analysisMessage, setAnalysisMessage] = useState("");
 
   const {
     selectedFile,
@@ -22,7 +21,6 @@ function MRIUpload() {
   );
 
   function selectMRIFile(file) {
-    setAnalysisMessage("");
     return handleFileSelect(file);
   }
 
@@ -50,14 +48,12 @@ function MRIUpload() {
   function handleAnalyze() {
     if (!canAnalyze) return;
 
-    setAnalysisMessage(
-      "MRI image is ready. Model analysis will become available after backend integration."
-    );
+    // Notify parent App.jsx to switch workflow state
+    onAnalyze?.(selectedFile);
   }
 
   function handleRemove() {
     removeFile();
-    setAnalysisMessage("");
   }
 
   function formatFileSize(bytes) {
@@ -79,7 +75,7 @@ function MRIUpload() {
                  bg-white p-5 sm:p-[25px]"
       aria-labelledby="upload-title"
     >
-      {/* Hidden file input */}
+      {/* Hidden MRI file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -110,7 +106,7 @@ function MRIUpload() {
         Choose a brain MRI image to begin.
       </p>
 
-      {/* MRI upload area */}
+      {/* Drag and drop upload area */}
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -181,8 +177,10 @@ function MRIUpload() {
         )}
 
         {/* Image actions */}
-        <div className="mt-5 flex flex-wrap
-                        items-center justify-center gap-3">
+        <div
+          className="mt-5 flex flex-wrap
+                     items-center justify-center gap-3"
+        >
           <button
             type="button"
             onClick={openFilePicker}
@@ -248,7 +246,7 @@ function MRIUpload() {
         )}
       </div>
 
-      {/* Analyze button */}
+      {/* Analyze button connected to App.jsx */}
       <button
         type="button"
         disabled={!canAnalyze}
@@ -265,18 +263,6 @@ function MRIUpload() {
       >
         Analyze MRI →
       </button>
-
-      {/* Analysis placeholder feedback */}
-      {analysisMessage && (
-        <div
-          role="status"
-          className="mt-4 rounded-xl border
-                     border-blue-200 bg-blue-50
-                     px-4 py-3 text-sm text-[#1D4ED8]"
-        >
-          {analysisMessage}
-        </div>
-      )}
 
       <p className="mt-5 text-xs leading-relaxed text-[#71829A]">
         Your image stays in this research workflow.

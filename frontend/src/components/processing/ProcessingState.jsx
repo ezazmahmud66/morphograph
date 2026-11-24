@@ -1,85 +1,136 @@
 
 const processingSteps = [
-  { label: "Image uploaded", completed: true },
-  { label: "Preprocessing complete", completed: true },
-  { label: "Running model inference...", completed: false },
+  {
+    id: "validation",
+    label: "Image validation",
+    description: "Completed — Client-side validation only",
+    status: "completed",
+  },
+  {
+    id: "backend",
+    label: "Backend connection",
+    description: "Not configured",
+    status: "pending",
+  },
+  {
+    id: "inference",
+    label: "Model inference",
+    description: "Not started",
+    status: "pending",
+  },
 ];
 
-function ProcessingState() {
+function ProcessingState({ onCancel, onShowError }) {
   return (
     <section
       className="mx-auto w-full max-w-[760px]
                  rounded-[22px] border border-[#E0E8F3]
                  bg-white p-5 sm:p-[25px]"
       aria-labelledby="processing-title"
-      aria-busy="true"
     >
       <h2
         id="processing-title"
-        className="text-xl font-semibold text-[#12233D] sm:text-2xl"
+        className="text-xl font-semibold
+                   text-[#12233D] sm:text-2xl"
       >
-        Analyzing your MRI
+        MRI Analysis
       </h2>
 
       <p className="mt-2 text-sm leading-relaxed text-[#71829A]">
-        Processing your image with the selected model.
+        Your MRI image has passed client-side validation.
       </p>
 
-      {/* Processing illustration */}
+      {/* MRI illustration */}
       <div
         className="mx-auto mt-8 flex h-[185px]
                    w-full max-w-[210px] items-center
                    justify-center rounded-2xl
                    bg-[#EEF5FF] sm:mt-10 sm:max-w-[250px]"
+        aria-hidden="true"
       >
         <span className="text-3xl font-semibold text-[#2463EB]">
           MRI
         </span>
       </div>
 
-      {/* Processing steps */}
-      <div className="mt-8 space-y-4 sm:mt-10" role="status">
+      {/* Explicit workflow statuses */}
+      <div className="mt-8 space-y-5 sm:mt-10">
         {processingSteps.map((step) => (
-          <div key={step.label} className="flex items-start gap-3">
+          <div key={step.id} className="flex items-start gap-3">
             <span
-              className={`mt-0.5 shrink-0 ${
-                step.completed
+              className={`mt-0.5 shrink-0 text-lg ${
+                step.status === "completed"
                   ? "text-emerald-600"
-                  : "animate-pulse text-[#2463EB]"
+                  : "text-[#94A3B8]"
               }`}
               aria-hidden="true"
             >
-              {step.completed ? "●" : "◌"}
+              {step.status === "completed" ? "✓" : "○"}
             </span>
 
-            <span
-              className={`text-sm leading-relaxed font-medium ${
-                step.completed
-                  ? "text-emerald-700"
-                  : "text-[#2463EB]"
-              }`}
-            >
-              {step.label}
-            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#12233D]">
+                {step.label}
+              </p>
+
+              <p className="mt-1 text-xs leading-relaxed text-[#71829A]">
+                {step.description}
+              </p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Illustrative loading indicator */}
+      {/* Backend availability notice */}
       <div
-        className="mt-7 h-2.5 w-full overflow-hidden
-                   rounded-full bg-[#EEF5FF]"
-        role="progressbar"
-        aria-label="Illustrative processing progress"
-        aria-valuenow={65}
-        aria-valuemin={0}
-        aria-valuemax={100}
+        className="mt-8 rounded-xl border border-amber-200
+                   bg-amber-50 px-4 py-4"
+        role="status"
       >
-        <div className="h-full w-[65%] rounded-full bg-[#2463EB]" />
+        <p className="text-sm font-semibold text-amber-900">
+          Analysis is not available yet
+        </p>
+
+        <p className="mt-2 text-sm leading-relaxed text-amber-800">
+          Your image is ready for analysis. The backend
+          service and model inference are not connected.
+          No MRI prediction or segmentation has been performed.
+        </p>
+
+        {/* Navigate to service details */}
+        <button
+          type="button"
+          onClick={onShowError}
+          className="mt-4 min-h-11 rounded-lg
+                     border border-amber-300 bg-white
+                     px-5 py-2.5 text-sm font-semibold
+                     text-amber-900 transition-colors
+                     hover:bg-amber-100
+                     focus-visible:outline-2
+                     focus-visible:outline-offset-2
+                     focus-visible:outline-amber-600"
+        >
+          View service details
+        </button>
       </div>
 
-      <p className="mt-3 text-xs leading-relaxed text-[#71829A]">
-        Processing interface preview — progress is illustrative.
+      {/* Back to upload */}
+      <button
+        type="button"
+        onClick={onCancel}
+        className="mt-8 min-h-12 w-full rounded-xl
+                   bg-[#2463EB] px-6 py-3
+                   font-semibold text-white
+                   transition-colors hover:bg-[#1D4ED8]
+                   focus-visible:outline-2
+                   focus-visible:outline-offset-2
+                   focus-visible:outline-[#2463EB]"
+      >
+        Back to upload
+      </button>
+
+      <p className="mt-5 text-xs leading-relaxed text-[#71829A]">
+        Research prototype • Not intended for clinical use
       </p>
     </section>
   );
