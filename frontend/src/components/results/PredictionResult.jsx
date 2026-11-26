@@ -1,18 +1,49 @@
 
-const demoResult = {
-  predictedClass: "Glioma",
-  confidence: 0.946,
-  originalImage: null,
-  segmentationImage: null,
+const CLASS_LABELS = {
+  glioma: "Glioma",
+  meningioma: "Meningioma",
+  pituitary: "Pituitary",
+  no_tumor: "No Tumor",
 };
 
-function PredictionResult({ result = demoResult }) {
+function PredictionResult({ result }) {
+  if (!result) {
+    return null;
+  }
+
   const confidence = Math.max(
     0,
     Math.min(100, Number(result.confidence) * 100 || 0)
   );
 
-  const isDemo = result === demoResult;
+  const predictedClass =
+    CLASS_LABELS[result.predictedClass] ||
+    result.predictedClass;
+
+  const probabilities = Object.entries(
+    result.probabilities || {}
+  );
+
+  const images = [
+    {
+      id: "original",
+      label: "Original MRI",
+      alt: "Uploaded brain MRI scan",
+      src: result.originalImage,
+    },
+    {
+      id: "segmentation",
+      label: "Segmentation Mask",
+      alt: "Predicted binary tumor segmentation mask",
+      src: result.segmentationImage,
+    },
+    {
+      id: "roi",
+      label: "Extracted ROI",
+      alt: "Mask-guided region of interest",
+      src: result.roiImage,
+    },
+  ];
 
   return (
     <section
@@ -23,90 +54,73 @@ function PredictionResult({ result = demoResult }) {
     >
       <h2
         id="result-title"
-        className="text-xl font-semibold text-[#12233D] sm:text-2xl"
+        className="text-xl font-semibold
+                   text-[#12233D] sm:text-2xl"
       >
         Analysis results
       </h2>
 
-      {isDemo && (
-        <p className="mt-2 text-xs text-[#71829A]">
-          Sample output — illustrative values only
-        </p>
-      )}
+      <p className="mt-2 text-sm text-[#71829A]">
+        Analysis completed using the MorphoGraph
+        research inference pipeline.
+      </p>
 
-      {/* MRI visualization */}
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5">
-        <div className="min-w-0">
-          <div
-            className="flex aspect-square items-center
-                       justify-center overflow-hidden
-                       rounded-xl bg-[#172940]
-                       sm:aspect-auto sm:h-[185px]"
-          >
-            {result.originalImage ? (
-              <img
-                src={result.originalImage}
-                alt="Original brain MRI scan"
-                className="h-full w-full object-contain"
-              />
-            ) : (
-              <span className="text-xl font-semibold text-[#ADC8E6]">
-                MRI
-              </span>
-            )}
+      {/* MRI Images */}
+      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5">
+        {images.map((image) => (
+          <div key={image.id} className="min-w-0">
+            <div
+              className="flex aspect-square items-center
+                         justify-center overflow-hidden
+                         rounded-xl bg-[#172940]"
+            >
+              {image.src ? (
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <span className="text-sm text-[#ADC8E6]">
+                  Unavailable
+                </span>
+              )}
+            </div>
+
+            <p className="mt-2 text-center text-xs text-[#71829A]">
+              {image.label}
+            </p>
           </div>
-
-          <p className="mt-2 text-xs text-[#71829A]">
-            Original scan
-          </p>
-        </div>
-
-        <div className="min-w-0">
-          <div
-            className="flex aspect-square items-center
-                       justify-center overflow-hidden
-                       rounded-xl bg-[#172940]
-                       sm:aspect-auto sm:h-[185px]"
-          >
-            {result.segmentationImage ? (
-              <img
-                src={result.segmentationImage}
-                alt="Predicted tumor segmentation"
-                className="h-full w-full object-contain"
-              />
-            ) : (
-              <span className="text-xl font-semibold text-[#75D5CA]">
-                MASK
-              </span>
-            )}
-          </div>
-
-          <p className="mt-2 text-xs text-[#71829A]">
-            Segmentation
-          </p>
-        </div>
+        ))}
       </div>
 
-      {/* Classification */}
-      <div className="mt-8">
+      {/* Predicted Class */}
+      <div className="mt-8 rounded-xl bg-[#EEF5FF] px-5 py-5">
         <p className="text-sm text-[#71829A]">
           Predicted class
         </p>
 
-        <p className="mt-1 break-words text-2xl font-semibold text-[#12233D]">
-          {result.predictedClass}
+        <p
+          className="mt-2 text-2xl font-semibold
+                     text-[#12233D]"
+        >
+          {predictedClass}
+        </p>
+
+        <p className="mt-2 text-sm text-[#526782]">
+          Model confidence: {confidence.toFixed(2)}%
         </p>
       </div>
 
-      {/* Confidence score */}
+      {/* Confidence Bar */}
       <div className="mt-7">
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-3 flex items-center justify-between">
           <p className="text-sm text-[#71829A]">
-            Confidence
+            Prediction confidence
           </p>
 
           <span className="text-sm font-semibold text-[#2463EB]">
-            {confidence.toFixed(1)}%
+            {confidence.toFixed(2)}%
           </span>
         </div>
 
@@ -126,8 +140,80 @@ function PredictionResult({ result = demoResult }) {
         </div>
       </div>
 
-      <p className="mt-5 text-xs leading-relaxed text-[#71829A]">
-        Research demonstration only — not for diagnosis.
+      {/* Four-Class Probabilities */}
+      <div className="mt-8">
+        <h3 className="text-base font-semibold text-[#12233D]">
+          Class probabilities
+        </h3>
+
+        <div className="mt-5 space-y-5">
+          {probabilities.map(([name, probability]) => {
+            const percentage = Math.max(
+              0,
+              Math.min(
+                100,
+                Number(probability) * 100 || 0
+              )
+            );
+
+            return (
+              <div key={name}>
+                <div
+                  className="mb-2 flex items-center
+                             justify-between gap-3"
+                >
+                  <span className="text-sm text-[#526782]">
+                    {CLASS_LABELS[name] || name}
+                  </span>
+
+                  <span
+                    className="text-sm font-semibold
+                               text-[#12233D]"
+                  >
+                    {percentage.toFixed(2)}%
+                  </span>
+                </div>
+
+                <div
+                  className="h-2 overflow-hidden
+                             rounded-full bg-[#EEF5FF]"
+                >
+                  <div
+                    className="h-full rounded-full bg-[#2463EB]"
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ROI Information */}
+      {result.roiMetadata?.roi_mode && (
+        <div
+          className="mt-8 rounded-xl border
+                     border-[#E0E8F3] bg-[#F8FAFD]
+                     px-4 py-4"
+        >
+          <h3 className="text-sm font-semibold text-[#12233D]">
+            Region of interest
+          </h3>
+
+          <p className="mt-2 text-xs text-[#71829A]">
+            Extraction mode: {result.roiMetadata.roi_mode}
+          </p>
+        </div>
+      )}
+
+      {/* Research Disclaimer */}
+      <p
+        className="mt-8 text-xs leading-relaxed
+                   text-[#71829A]"
+      >
+        Research prototype only. Model confidence is
+        not a clinical probability. Results are not
+        intended for medical diagnosis or treatment.
       </p>
     </section>
   );

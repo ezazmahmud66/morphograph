@@ -1,16 +1,20 @@
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Header from "./components/layout/Header";
 import Hero from "./components/layout/Hero";
 import MRIUpload from "./components/upload/MRIUpload";
 import ProcessingState from "./components/processing/ProcessingState";
+import PredictionResult from "./components/results/PredictionResult";
 import ResearchOverview from "./components/research/ResearchOverview";
+
 import { siteConfig } from "./config/site";
+import { analyzeMRI } from "./services/mriApi";
 
 const WORKFLOW_STATES = {
   UPLOAD: "upload",
   PROCESSING: "processing",
+  RESULT: "result",
   ERROR: "error",
 };
 
@@ -19,19 +23,90 @@ function App() {
     WORKFLOW_STATES.UPLOAD
   );
 
-  // Start the frontend workflow after image validation
-  function handleAnalyzeRequest() {
-    setWorkflowState(WORKFLOW_STATES.PROCESSING);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const abortControllerRef = useRef(null);
+  const imageUrlRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current);
+      }
+    };
+  }, []);
+
+  function clearPreviousImage() {
+    if (imageUrlRef.current) {
+      URL.revokeObjectURL(imageUrlRef.current);
+      imageUrlRef.current = null;
+    }
   }
 
-  // Show backend availability details
-  function handleShowServiceError() {
-    setWorkflowState(WORKFLOW_STATES.ERROR);
-  }
-
-  // Reset the workflow and return to upload
   function handleBackToUpload() {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+
+    clearPreviousImage();
+
+    setAnalysisResult(null);
+    setErrorMessage("");
     setWorkflowState(WORKFLOW_STATES.UPLOAD);
+  }
+
+  async function handleAnalyzeRequest(file) {
+    if (!(file instanceof File)) {
+      setErrorMessage("Please select a valid MRI image.");
+      setWorkflowState(WORKFLOW_STATES.ERROR);
+      return;
+    }
+
+    abortControllerRef.current?.abort();
+    clearPreviousImage();
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const originalImageUrl = URL.createObjectURL(file);
+    imageUrlRef.current = originalImageUrl;
+
+    setAnalysisResult(null);
+    setErrorMessage("");
+    setWorkflowState(WORKFLOW_STATES.PROCESSING);
+
+    try {
+      const result = await analyzeMRI(file, controller.signal);
+
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      setAnalysisResult({
+        ...result,
+        originalImage: originalImageUrl,
+      });
+
+      setWorkflowState(WORKFLOW_STATES.RESULT);
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "MRI analysis failed. Please try again."
+      );
+
+      setWorkflowState(WORKFLOW_STATES.ERROR);
+    } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
+    }
   }
 
   function renderActiveView() {
@@ -40,9 +115,28 @@ function App() {
         return (
           <ProcessingState
             onCancel={handleBackToUpload}
-            onShowError={handleShowServiceError}
           />
         );
+
+      case WORKFLOW_STATES.RESULT:
+        return analysisResult ? (
+          <div>
+            <PredictionResult result={analysisResult} />
+
+            <div className="mx-auto mt-5 max-w-[760px]">
+              <button
+                type="button"
+                onClick={handleBackToUpload}
+                className="min-h-12 w-full rounded-xl
+                           bg-[#2463EB] px-6 py-3
+                           font-semibold text-white
+                           hover:bg-[#1D4ED8]"
+              >
+                Analyze another MRI
+              </button>
+            </div>
+          </div>
+        ) : null;
 
       case WORKFLOW_STATES.ERROR:
         return (
@@ -50,78 +144,25 @@ function App() {
             className="mx-auto w-full max-w-[760px]
                        rounded-[22px] border border-red-200
                        bg-white p-5 sm:p-[25px]"
-            aria-labelledby="error-title"
+            role="alert"
           >
-            <div
-              className="mx-auto flex h-14 w-14
-                         items-center justify-center
-                         rounded-full bg-red-50
-                         text-2xl font-bold text-red-600"
-              aria-hidden="true"
-            >
-              !
-            </div>
-
-            <h2
-              id="error-title"
-              className="mt-5 text-center text-xl
-                         font-semibold text-[#12233D]
-                         sm:text-2xl"
-            >
-              Analysis service unavailable
+            <h2 className="text-xl font-semibold text-[#12233D]">
+              MRI analysis failed
             </h2>
 
-            <p
-              className="mt-3 text-center text-sm
-                         leading-relaxed text-[#71829A]"
-            >
-              The MRI analysis backend has not been
-              configured yet. Your image passed
-              client-side validation, but no model
-              inference or segmentation was performed.
+            <p className="mt-4 text-sm text-red-700">
+              {errorMessage}
             </p>
-
-            <div
-              className="mt-6 rounded-xl border
-                         border-amber-200 bg-amber-50
-                         px-4 py-4"
-              role="status"
-            >
-              <p className="text-sm font-semibold text-amber-900">
-                Service status: Not configured
-              </p>
-
-              <p
-                className="mt-2 text-sm leading-relaxed
-                           text-amber-800"
-              >
-                Backend integration is planned for a
-                later development phase. This is not
-                an image validation failure.
-              </p>
-            </div>
 
             <button
               type="button"
               onClick={handleBackToUpload}
-              className="mt-7 min-h-12 w-full
-                         rounded-xl bg-[#2463EB]
-                         px-6 py-3 font-semibold
-                         text-white transition-colors
-                         hover:bg-[#1D4ED8]
-                         focus-visible:outline-2
-                         focus-visible:outline-offset-2
-                         focus-visible:outline-[#2463EB]"
+              className="mt-7 min-h-12 w-full rounded-xl
+                         bg-[#2463EB] px-6 py-3
+                         font-semibold text-white"
             >
               Back to upload
             </button>
-
-            <p
-              className="mt-5 text-center text-xs
-                         leading-relaxed text-[#71829A]"
-            >
-              Research prototype • Not intended for clinical use
-            </p>
           </section>
         );
 
@@ -139,9 +180,7 @@ function App() {
 
       <main className="px-6 pb-12 sm:px-8">
         <Hero />
-
         {renderActiveView()}
-
         <ResearchOverview />
       </main>
 

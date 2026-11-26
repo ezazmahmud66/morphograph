@@ -1,3 +1,4 @@
+
 # Environment Variables
 .env
 .env.*
@@ -29,6 +30,9 @@ datasets/
 private_data/
 uploads/
 
+# Test MRI Images
+/backend/tests/sample_mri/
+
 # Logs
 *.log
 
@@ -37,3 +41,25 @@ uploads/
 .idea/
 .DS_Store
 Thumbs.db
+
+# MorphoGraph Model Artifacts
+/backend/artifacts/
+
+# Track architecture definitions, not weights
+/backend/models/*
+!/backend/models/segmentation/
+!/backend/models/cnn/
+!/backend/models/graph/
+!/backend/models/fusion/
+
+/backend/models/segmentation/*
+!/backend/models/segmentation/model_definition.py
+
+/backend/models/cnn/*
+!/backend/models/cnn/model_definition.py
+
+/backend/models/graph/*
+!/backend/models/graph/model_definition.py
+
+/backend/models/fusion/*
+!/backend/models/fusion/model_definition.py
