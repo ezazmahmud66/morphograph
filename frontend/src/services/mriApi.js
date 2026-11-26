@@ -1,9 +1,18 @@
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "http://127.0.0.1:8000" : "")
+).replace(/\/+$/, "");
 
 export async function analyzeMRI(file, signal) {
   if (!(file instanceof File)) {
     throw new Error("Please select a valid MRI image.");
+  }
+
+  if (!API_BASE_URL) {
+    throw new Error(
+      "MRI analysis backend is not configured for this deployment."
+    );
   }
 
   const formData = new FormData();
